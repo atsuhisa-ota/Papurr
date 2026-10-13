@@ -33,6 +33,7 @@ first and then opened. Projects become tags, not copies.
 - **A note for each paper** (a Markdown file in the folder; formulas are shown typeset)
 - **Bring in the PDFs you already have**: Papurr reads them, and renames and adds only those you approve
 - **Today's arXiv**: the latest papers of the categories you follow, with abstracts
+- **INSPIRE search**: search INSPIRE's database through its API; save a result with one click
 - **AI features (optional)**: with your own Claude, ChatGPT or Kimi Code plan, rank Today's arXiv by relevance to your
   research, explain why a paper is recommended, translate and summarize
 - **Works with cloud-synced folders**; English, Japanese and Simplified Chinese interface; colour themes

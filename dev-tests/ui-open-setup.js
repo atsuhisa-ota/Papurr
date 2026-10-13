@@ -57,6 +57,7 @@ const state = {
   S_no_tab: () => {},
   // "Add to library" (save without opening): a library tab answers / no library tab / already saved
   T_save_new: () => { libraryTab(); },
+  AG_save_quiet: () => { libraryTab(); },
   Y_save_busy: () => { libraryTab(); },
   Z_bad_request: () => {},
   // A PDF of that name is in the folder but not in the library (put there by hand, maybe with the user's annotations).

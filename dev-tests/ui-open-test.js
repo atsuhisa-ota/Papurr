@@ -149,6 +149,12 @@
         check(S[0] + " the library tab is told, and this tab does not become the library", window.libraryHeard && window.libraryHeard.type === "added" && window.libraryHeard.id === "2301.12345" && !window.wentTo, JSON.stringify(window.libraryHeard));
         break;
       }
+      case "AG_save_quiet": { // saved from a list inside the library (an INSPIRE result): the library is only told to read again
+        await sleep(300);
+        check("AG quiet save: the PDF is saved, not opened, not marked as opened", fakeDir.text("2301.12345v2.pdf") !== null && idxNow()["2301.12345"] && shown === undefined && !opened["2301.12345"], String(shown));
+        check("AG and the library is told quietly (no jump, no highlight asked for), this tab does not become the library", window.libraryHeard && window.libraryHeard.type === "added" && window.libraryHeard.quiet === true && !window.wentTo, JSON.stringify(window.libraryHeard));
+        break;
+      }
       case "AA_existing_arxiv":
       case "AB_existing_journal":
       case "AC_existing_ads": {

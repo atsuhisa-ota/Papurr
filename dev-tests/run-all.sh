@@ -32,6 +32,7 @@ section "helper program and installer (python, macOS simulated)"; python3 test-n
 section "importing PDFs (node)";                  node test-import.js     | tee -a "$OUT"
 section "research profile (node)";                node test-profile.js    | tee -a "$OUT"
 section "Today's arXiv and the clock (node)";   node test-today-clock.js | tee -a "$OUT"
+section "searching INSPIRE (node)";                 node test-inspire.js    | tee -a "$OUT"
 section "ranking (node)";                          node test-rank.js       | tee -a "$OUT"
 section "full-text summary (node)";               node test-summary.js    | tee -a "$OUT"
 section "translation (node)";                      node test-translate.js  | tee -a "$OUT"
@@ -42,6 +43,8 @@ section "dictionaries (node)";                        node test-i18n.js       | 
 section "background service worker (node)";           node test-background.js | tee -a "$OUT"
 
 build library "$WORK/ui-lib.html";         section "library page";  run_page "$WORK/ui-lib.html" "" 90000 | tee -a "$OUT"
+build inspire "$WORK/ui-inspire.html";     section "INSPIRE page";  run_page "$WORK/ui-inspire.html" "" 60000 | tee -a "$OUT"
+build layout-inspire "$WORK/ui-lay-inspire.html"; section "layout: INSPIRE page with results (themes, widths, buttons)"; run_page "$WORK/ui-lay-inspire.html" "results&lang=ja" 40000 | tee -a "$OUT"
 build options-import "$WORK/ui-import.html"; section "importing PDFs added by hand (Settings)"; run_page "$WORK/ui-import.html" "" 60000 | tee -a "$OUT"
 build options-import "$WORK/ui-import-ja.html"; section "importing PDFs added by hand, Japanese"; run_page "$WORK/ui-import-ja.html" "lang=ja" 60000 | tee -a "$OUT"
 build today "$WORK/ui-today.html"; section "Today's arXiv";  run_page "$WORK/ui-today.html" "" 60000 | tee -a "$OUT"
@@ -126,7 +129,7 @@ for case in "A_new_arxiv|id=2301.12345" "B_saved_latest|id=2301.12345" "C_v1_sav
   "S_no_tab|doi=10.1103/physrevd.108.045001&pdf=https://publisher.example/x.pdf" "N_external_fails_ja|id=2301.12345&lang=ja" \
   "W_ads|ads=1970A%26A.....5...84Z&pdf=https%3A%2F%2Farticles.adsabs.harvard.edu%2Fpdf%2F1970A%2526A.....5...84Z&title=Black%20holes%20in%201970&authors=%5B%22Ann%20Zel%22%2C%22Bo%20Novikov%22%5D" \
   "X_ads_saved|ads=1970A%26A.....5...84Z&pdf=https%3A%2F%2Farticles.adsabs.harvard.edu%2Fpdf%2F1970A%2526A.....5...84Z" \
-  "T_save_new|id=2301.12345&v=v2&save=1" "U_save_nolib|id=2301.12345&save=1" "V_save_saved|id=2301.12345&v=v2&save=1" \
+  "T_save_new|id=2301.12345&v=v2&save=1" "AG_save_quiet|id=2301.12345&v=v2&save=1&quiet=1" "U_save_nolib|id=2301.12345&save=1" "V_save_saved|id=2301.12345&v=v2&save=1" \
   "Z_bad_request|id=..%2F..%2Fsecret" "Z_bad_request|id=2301.12345&v=..%2Fx" "Z_bad_request|ads=nonsense&pdf=https%3A%2F%2Farticles.adsabs.harvard.edu%2Fpdf%2Fx" \
   "AA_existing_arxiv|id=2301.12345&v=v2" "AB_existing_journal|doi=10.1103/physrevd.108.045001&pdf=https://publisher.example/x.pdf" \
   "AC_existing_ads|ads=1970A%26A.....5...84Z&pdf=https%3A%2F%2Farticles.adsabs.harvard.edu%2Fpdf%2F1970A%2526A.....5...84Z" "AD_existing_notpdf|id=2301.12345&v=v2" \

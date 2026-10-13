@@ -13,6 +13,8 @@ kind, out = sys.argv[1], sys.argv[2]
 
 PAGES = {  # kind: (html, scripts to put before the page script, page script, scripts after it)
     "library": ("library.html", ["ui-harness.js", "@i18n", "@common", "@import", "@ai", "@profile", "ui-library-setup.js"], "library.js", ["ui-lib-test.js"]),
+    "inspire": ("inspire.html", ["ui-harness.js", "@i18n", "@common", "@inspire", "ui-inspire-setup.js"], "inspire-page.js", ["ui-inspire-test.js"]),
+    "layout-inspire": ("inspire.html", ["ui-harness.js", "@i18n", "@common", "@inspire", "ui-inspire-setup.js"], "inspire-page.js", ["ui-layout-test.js"]),
     "demo": ("library.html", ["ui-harness.js", "@i18n", "@common", "@import", "@ai", "@profile", "ui-library-setup.js"], "library.js", ["ui-demo.js"]),
     "library-odd": ("library.html", ["ui-harness.js", "@i18n", "@common", "@import", "@ai", "@profile", "ui-library-setup.js"], "library.js", ["ui-lib-odd-test.js"]),
     "layout-today": ("today.html", ["ui-harness.js", "@i18n", "@common", "@ai", "@profile", "@rank", "@reason", "@translate", "ui-today-setup.js"], "today.js", ["ui-layout-test.js"]),
@@ -37,13 +39,13 @@ html_name, before, page_js, after = PAGES[kind]
 html = open(os.path.join(EXT, html_name), encoding="utf-8").read()
 
 def src(name):
-    if name in ("@common", "@i18n", "@import", "@import-ui", "@ai", "@ai-ui", "@profile", "@profile-ui", "@rank", "@reason", "@summary", "@translate"):
+    if name in ("@common", "@i18n", "@import", "@import-ui", "@ai", "@ai-ui", "@profile", "@profile-ui", "@inspire", "@rank", "@reason", "@summary", "@translate"):
         return "file://" + os.path.join(EXT, name[1:] + ".js")
     return "file://" + os.path.join(HERE, name)
 
 html = re.sub(r'(href|src)="(style\.css|theme\.js|icons/[^"]+|vendor/[^"]+)"', lambda m: '%s="file://%s"' % (m.group(1), os.path.join(EXT, m.group(2))), html)
 html = html.replace('<script src="i18n.js"></script>', "")  # loaded after the fake browser instead (see PAGES)
-for line in ('  <script src="import.js"></script>\n', '  <script src="import-ui.js"></script>\n', '  <script src="ai.js"></script>\n', '  <script src="ai-ui.js"></script>\n', '  <script src="profile.js"></script>\n', '  <script src="profile-ui.js"></script>\n', '  <script src="rank.js"></script>\n', '  <script src="reason.js"></script>\n', '  <script src="summary.js"></script>\n', '  <script src="translate.js"></script>\n'):
+for line in ('  <script src="import.js"></script>\n', '  <script src="inspire.js"></script>\n', '  <script src="import-ui.js"></script>\n', '  <script src="ai.js"></script>\n', '  <script src="ai-ui.js"></script>\n', '  <script src="profile.js"></script>\n', '  <script src="profile-ui.js"></script>\n', '  <script src="rank.js"></script>\n', '  <script src="reason.js"></script>\n', '  <script src="summary.js"></script>\n', '  <script src="translate.js"></script>\n'):
     html = html.replace(line, "")  # (loaded through PAGES where a page needs it)
 if '<script src="common.js"></script>' in html:
     html = html.replace('<script src="common.js"></script>', "".join('<script src="%s"></script>' % src(n) for n in before))

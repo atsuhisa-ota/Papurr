@@ -19,6 +19,7 @@ const arxivId = params.get("id");
 const localOnly = params.get("local") === "1"; // open the newest saved version; never go online
 const journalOnly = params.get("journal") === "1"; // open the saved journal version
 const saveOnly = params.get("save") === "1"; // save, do not open
+const quietSave = params.get("quiet") === "1"; // with save: tell the library tab only to read its list again (no jump, no highlight), then close
 const wantedVersion = params.get("v"); // e.g. "v2"; null means "the latest version"
 const journalDoiParam = params.get("doi");
 const journalPdfUrl = params.get("pdf");
@@ -266,6 +267,16 @@ async function saveToLibrary(dir) {
 // Tell an open library tab (it answers "shown", comes to the front and highlights the paper) and close this tab;
 // with no library tab, this tab becomes the library.
 async function handOverToLibrary(id) {
+  if (quietSave) { // (saved from a list inside the library itself, e.g. an INSPIRE result: the library stays as it is)
+    if (typeof BroadcastChannel === "function") {
+      const channel = new BroadcastChannel("papurr");
+      channel.postMessage({ type: "added", id, quiet: true });
+      channel.close();
+    }
+    const tab = await chrome.tabs.getCurrent();
+    if (tab) await chrome.tabs.remove(tab.id);
+    return;
+  }
   const shown = await askLibraryToShow(id, "added");
   const tab = await chrome.tabs.getCurrent();
   if (shown) {

@@ -63,11 +63,11 @@
     }
     document.body.style.maxWidth = "";
     check("layout: the text of every button stays on one line and inside the button (1000px and 520px)", cramped.length === 0, [...new Set(cramped)].slice(0, 8).join(" | "));
-    // The header's link to INSPIRE: opens INSPIRE in a new tab (safely), sits between Today's arXiv and Settings, level with the others.
-    { const il = document.querySelector(".header-actions a.inspire-link"), links = [...document.querySelectorAll(".header-actions a")];
+    // The header's link to INSPIRE: the page of its own (same tab), between Today's arXiv and Settings, level with the others.
+    { const links = [...document.querySelectorAll(".header-actions a")], il = links.find((a) => a.getAttribute("href") === "inspire.html");
       const other = links.find((a) => a.getAttribute("href") === "help.html" || a.getAttribute("href") === "options.html");
       const mid = (e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; };
-      check("layout: the header has the INSPIRE link: a new tab, noopener, between Today's arXiv and Settings, level with the others", !!il && il.href === "https://inspirehep.net/" && il.target === "_blank" && /noopener/.test(il.rel) && il.querySelector(".inspire-pill").textContent === "INSPIRE" && links.map((a) => a.getAttribute("href")).join("|").includes("today.html|https://inspirehep.net/|options.html") && !!other && Math.abs(mid(il.querySelector(".inspire-pill")) - mid(other)) < 3, il ? links.map((a) => a.getAttribute("href")).join("|") + " " + mid(il.querySelector(".inspire-pill")) + " vs " + mid(other) : "no link"); }
+      check("layout: the header has the INSPIRE link to the INSPIRE page: same tab, between Today's arXiv and Settings, level with the others", !!il && !il.target && il.textContent === "INSPIRE" && links.map((a) => a.getAttribute("href")).join("|").includes("today.html|inspire.html|options.html") && !!other && Math.abs(mid(il) - mid(other)) < 3, il ? links.map((a) => a.getAttribute("href")).join("|") + " " + mid(il) + " vs " + mid(other) : "no link"); }
     // The header's switch: its checkbox is level with its text (the Settings page once drew it 2 px too high).
     { const box = document.querySelector(".switch input"), label = document.querySelector(".switch span");
       if (box && label) { const r = document.createRange(); r.selectNodeContents(label); const t = r.getBoundingClientRect(), b = box.getBoundingClientRect();

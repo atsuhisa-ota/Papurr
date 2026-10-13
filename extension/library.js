@@ -792,6 +792,10 @@ if (channel) {
   channel.onmessage = async (e) => {
     const m = e.data || {};
     if ((m.type !== "added" && m.type !== "show") || !currentDir) return;
+    if (m.quiet) { // a paper saved from the INSPIRE page: read the list again, nothing else moves (no jump, no highlight)
+      await reloadQuietly();
+      return;
+    }
     channel.postMessage({ type: "shown", id: m.id });
     try {
       const tab = await chrome.tabs.getCurrent();

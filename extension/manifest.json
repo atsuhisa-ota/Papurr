@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Papurr",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "Saves arXiv PDFs into a folder you choose, and opens the saved copy instead of downloading again.",
   "permissions": ["storage", "scripting", "nativeMessaging", "contextMenus"],
   "host_permissions": [
