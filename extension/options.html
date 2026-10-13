@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title data-i18n="opt.title">Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="icons/icon-32.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body class="settings" data-page="options">
+  <header>
+    <h1><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path class="ring" d="M2.8 20.8 A14 5 -20 0 1 29.2 11.2" stroke-width="2.6"/><path class="head" d="M8.6 12 L9 3.5 L14.5 8 Z M23.4 12 L23 3.5 L17.5 8 Z" stroke-width="1.5" stroke-linejoin="round"/><circle class="head" cx="16" cy="16" r="9" stroke-width="0"/><path class="ring" d="M29.2 11.2 A14 5 -20 0 1 2.8 20.8" stroke-width="2.6"/></svg><span data-i18n="opt.title">Settings</span></h1>
+    <div class="header-actions">
+      <label class="switch" data-i18n-title="lib.handle.tip" title="On: Papurr snatches PDF links, saves the paper in your folder and opens it. Off: PDF links behave as usual and nothing is saved.">
+        <input type="checkbox" id="capture-toggle" checked> <span data-i18n="lib.handle">Snatch PDF links</span>
+      </label>
+      <a class="ghost" href="library.html" data-i18n="opt.back">Library</a>
+      <a class="ghost" href="today.html" data-i18n="lib.today">Today's arXiv</a>
+      <a class="ghost inspire-link" href="https://inspirehep.net/" target="_blank" rel="noopener noreferrer" data-i18n-title="lib.inspire.tip" title="Open INSPIRE (in a new tab)"><span class="inspire-pill" data-i18n="lib.inspire">INSPIRE</span><svg class="ext-ic" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5H2.5v7h7v-2M7 2.5h2.5V5M9.5 2.5L5.5 6.5"/></svg></a>
+      <a class="ghost" href="options.html" data-i18n="lib.settings">Settings</a>
+      <a class="ghost" href="help.html" data-i18n="lib.help">Help</a>
+    </div>
+  </header>
+
+  <section>
+    <h3><span data-i18n="opt.language">Language and theme</span> <a class="help-link" href="help.html#start" data-i18n-title="help.open.tip" title="Help on this section">?</a></h3>
+    <div class="inline-row">
+      <select id="language">
+        <option value="auto" data-i18n="lang.auto">Automatic (follow the browser)</option>
+        <option value="en" data-i18n="lang.en">English</option>
+        <option value="ja" data-i18n="lang.ja">日本語</option>
+        <option value="zh" data-i18n="lang.zh">简体中文</option>
+      </select>
+      <select id="theme" data-i18n-title="theme.label" title="Colour theme"></select>
+    </div>
+  </section>
+
+  <section>
+    <h3><span data-i18n="opt.folder">Folder</span> <a class="help-link" href="help.html#folder" data-i18n-title="help.open.tip" title="Help on this section">?</a></h3>
+    <div id="folder-status" class="status">Loading...</div>
+    <div id="folder-path" class="status path"></div>
+    <button id="choose" data-i18n="folder.choose">Choose folder</button>
+    <div id="import-note" class="status" hidden></div>
+    <button id="import-btn" hidden data-i18n="import.button">Identify and rename...</button>
+    <div id="import-status" class="status"></div>
+    <div id="import-panel" hidden></div>
+  </section>
+
+  <section>
+    <h3><span data-i18n="opt.openwith">Open with</span> <a class="help-link" href="help.html#openwith" data-i18n-title="help.open.tip" title="Help on this section">?</a></h3>
+    <label><input type="radio" name="open-mode" value="chrome"> <span data-i18n="mode.chrome">Chrome tab</span></label><br>
+    <label><input type="radio" name="open-mode" value="external"> <span data-i18n="mode.external">External PDF app</span></label>
+    <div class="inline-row">
+      <input id="viewer" type="text">
+      <button id="test-viewer" data-i18n="viewer.test">Test</button>
+    </div>
+    <div id="open-app" class="status"></div>
+    <div id="open-status" class="status"></div>
+    <div id="helper-status" class="status"></div>
+    <div id="helper-setup" class="status"></div>
+  </section>
+
+  <section>
+    <h3><span data-i18n="opt.today">Today's arXiv</span> <a class="help-link" href="help.html#today" data-i18n-title="help.open.tip" title="Help on this section">?</a></h3>
+    <div data-i18n="today.cats.desc">Choose the arXiv categories to follow. The Today's arXiv page lists their latest papers with abstracts.</div>
+    <div id="arxiv-cats" class="chips"></div>
+    <div class="inline-row">
+      <input id="new-cat" type="text" data-i18n-placeholder="today.cats.placeholder" placeholder="Other category, e.g. cs.LG">
+      <button id="add-cat" data-i18n="today.cats.add">Add</button>
+    </div>
+    <div id="cat-status" class="status"></div>
+  </section>
+
+
+  <section>
+    <h3><span data-i18n="opt.dbs">Databases</span> <a class="help-link" href="help.html#library" data-i18n-title="help.open.tip" title="Help on this section">?</a></h3>
+    <div data-i18n="dbs.desc">Paper databases such as arXiv, INSPIRE and NASA ADS.</div>
+    <ul id="sites-db"></ul>
+    <p>
+      <input id="new-db-site" type="text" data-i18n-placeholder="db.placeholder" placeholder="Site, e.g. scholar.google.com"><br>
+      <input id="new-name" type="text" data-i18n-placeholder="site.name.placeholder" placeholder="Name for the link icon"><br>
+      <input id="new-template" type="text" data-i18n-placeholder="site.template.placeholder" placeholder="Link for each paper, e.g. https://scholar.google.com/scholar?q=arxiv:{id}"><br>
+      <button id="add-db" data-i18n="db.add">Add database</button>
+      <span class="status" data-i18n="site.note">Every paper in the library gets an icon linking there.</span>
+    </p>
+    <p><button id="reset-db" data-i18n="db.reset">Restore the default databases</button></p>
+    <div id="db-status" class="status"></div>
+  </section>
+
+  <section>
+    <h3><span data-i18n="opt.sites">Journal sites</span> <a class="help-link" href="help.html#sites" data-i18n-title="help.open.tip" title="Help on this section">?</a></h3>
+    <div data-i18n="sites.desc">PDF links on these publisher sites are saved to your folder and reopened from it.</div>
+    <ul id="sites"></ul>
+    <p>
+      <input id="new-site" type="text" data-i18n-placeholder="site.placeholder" placeholder="Site, e.g. journals.example.org">
+      <button id="add" data-i18n="site.add">Add journal site</button>
+    </p>
+    <p><button id="reset" data-i18n="site.reset">Restore defaults</button></p>
+    <div id="site-status" class="status"></div>
+    <div class="status" data-i18n="site.reload">After changing sites, reload any tabs that are already open.</div>
+  </section>
+
+  <section id="ai-section">
+    <h3><span data-i18n="ai.title">AI features (optional)</span> <a class="help-link" href="help.html#ai" data-i18n-title="help.open.tip" title="Help on this section">?</a></h3>
+    <div data-i18n="ai.desc">Papurr has no AI of its own.</div>
+    <ul class="ai-features">
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg><span><b data-i18n="ai.f.rank">Ranking</b> <span data-i18n="ai.f.rank.desc">Today's arXiv in order of relevance to your research.</span></span></li>
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span><b data-i18n="ai.f.reason">Why recommended</b> <span data-i18n="ai.f.reason.desc">Two or three sentences on why a paper may matter for you.</span></span></li>
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM9 11h7M9 15h7"/></svg><span><b data-i18n="ai.f.summary">Full-text summary</b> <span data-i18n="ai.f.summary.desc">A whole paper summarized from its arXiv LaTeX source, kept in its note.</span></span></li>
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-9 4 9M14.5 18h5"/></svg><span><b data-i18n="ai.f.translate">Translation:</b> <span data-i18n="ai.f.translate.desc">abstracts and summaries into the language you choose.</span></span></li>
+    </ul>
+    <div id="ai-platform" class="status" hidden></div>
+    <div id="ai-body">
+      <div id="ai-guide" class="status" data-i18n="ai.guide">How much quota a ranking uses (rough guide).</div>
+      <p><label><input type="checkbox" id="ai-consent"> <span data-i18n="ai.consent">I understand what is sent.</span></label></p>
+      <p><label><input type="checkbox" id="ai-enabled" disabled> <span data-i18n="ai.enable">Use AI features</span></label></p>
+      <div id="ai-details" hidden>
+      <p><label><input type="checkbox" id="ai-estimate"> <span data-i18n="ai.estimate">Show how many tokens of your quota each action uses (estimates on the buttons, and what Papurr has used)</span></label></p>
+      <div class="ai-sub" id="ai-cmd">
+      <h4><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l5 5-5 5M11 17h8"/></svg><span data-i18n="ai.sub.command">Command and model</span></h4>
+      <div class="inline-row"><label for="ai-command" data-i18n="ai.command">AI command</label><select id="ai-command"></select></div>
+      <div class="inline-row"><input id="ai-path" type="text" data-i18n-placeholder="ai.path.placeholder" placeholder="Full path of the command, only if it is not found (optional)"></div>
+      <div class="inline-row"><button id="ai-check" data-i18n="ai.check">Check the command</button></div>
+      <div id="ai-status" class="status"></div>
+      <div id="ai-install" hidden></div>
+      <div id="ai-options" hidden></div>
+      </div>
+      <div id="ai-profile" class="ai-sub">
+        <h4><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span data-i18n="prof.title">My research (used to rank Today's arXiv)</span></h4>
+        <div class="status" data-i18n="prof.desc">Papurr reads your recent papers from INSPIRE.</div>
+        <div class="inline-row">
+          <input id="prof-url" type="text" data-i18n-placeholder="prof.url.placeholder" placeholder="https://inspirehep.net/authors/1234567">
+          <button id="prof-lookup" data-i18n="prof.lookup">Look up</button>
+        </div>
+        <div id="prof-author" class="status"></div>
+        <div class="inline-row"><label for="prof-months" data-i18n="prof.months">Period to follow</label><select id="prof-months"></select></div>
+        <div class="inline-row"><label for="prof-level" data-i18n="prof.level.own">Read from my papers</label><select id="prof-level"></select></div>
+        <div class="status" data-i18n="prof.level.note">Titles alone are cheap but less accurate.</div>
+        <label for="prof-add" data-i18n="prof.add">Topics to emphasize</label>
+        <textarea id="prof-add" rows="2"></textarea>
+        <label for="prof-exclude" data-i18n="prof.exclude">Topics to ignore</label>
+        <textarea id="prof-exclude" rows="2"></textarea>
+        <p>
+          <button id="prof-create" data-i18n="prof.create">Create profile</button>
+          <button id="prof-rebuild" class="mini" hidden data-i18n="prof.rebuild">Create again from scratch</button>
+        </p>
+        <div id="prof-confirm" class="notice" hidden>
+          <span id="prof-confirm-text"></span><br>
+          <button id="prof-run" data-i18n="prof.run">Use quota and run</button>
+          <button id="prof-cancel" data-i18n="common.cancel">Cancel</button>
+        </div>
+        <div id="prof-status" class="status"></div>
+        <button id="prof-savebtn" class="mini" hidden data-i18n="prof.save.again">Save again (no quota is used)</button>
+        <details id="prof-view" hidden><summary data-i18n="prof.view">Show the saved profile</summary><pre id="prof-summary" class="status"></pre></details>
+      </div>
+      <div id="ai-rank" class="ai-sub">
+        <h4><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg><span data-i18n="ai.sub.rank">Ranking Today's arXiv</span></h4>
+        <div class="status" data-i18n="ai.sub.rank.desc">In Today's arXiv, choose By relevance (AI) and press the rank button.</div>
+        <div class="inline-row"><label for="prof-level-rank" data-i18n="prof.level.rank">Read from the papers to rank</label><select id="prof-level-rank"></select></div>
+      </div>
+      <div id="ai-texts" class="ai-sub">
+        <h4><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM9 11h7M9 15h7"/></svg><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h9M8.5 3v2M6 5c1 4 4 7 7 8M11 5c-1 4-4 7-7 8M13 21l4-9 4 9M14.5 18h5"/></svg><span data-i18n="ai.sub.texts">Why recommended and summaries</span></h4>
+        <div class="status" data-i18n="ai.sub.texts.desc">Buttons on each paper; the results are kept in the paper's note.</div>
+        <div class="inline-row"><label for="ai-lang" data-i18n="ai.lang">Language of the AI's texts</label><select id="ai-lang"></select></div>
+        <div class="inline-row"><label for="ai-summary-level" data-i18n="ai.summary.level">Technical level of summaries</label><select id="ai-summary-level"></select></div>
+        <div class="field">
+          <label for="ai-summary-note" data-i18n="ai.summary.note">Your own instructions for summaries (optional)</label>
+          <textarea id="ai-summary-note" rows="3" maxlength="600" data-i18n-placeholder="ai.summary.note.ph" placeholder="e.g. Say which experiments could test the result."></textarea>
+          <div class="status" data-i18n="ai.summary.note.hint">Added to the instructions of every full-text summary and sent to the AI with the paper (at most 600 characters).</div>
+        </div>
+      </div>
+      <div id="ai-usage" class="ai-sub"></div>
+      <div class="status" data-i18n="ai.note">Papurr changes nothing in your Claude settings.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="ai-credit" data-i18n="opt.aicredit">Designed by Atsuhisa Ota · Implemented by AI (Claude)</footer>
+  <div class="ai-credit" id="app-version"></div>
+
+  <script src="common.js"></script>
+  <script src="import.js"></script>
+  <script src="import-ui.js"></script>
+  <script src="ai.js"></script>
+  <script src="ai-ui.js"></script>
+  <script src="profile.js"></script>
+  <script src="profile-ui.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

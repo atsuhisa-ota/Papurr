@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="today.title">Today's arXiv</title>
+  <link rel="icon" href="icons/icon-32.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <script src="i18n.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body class="library today" data-page="today">
+  <div id="top">
+    <header>
+      <h1><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path class="ring" d="M2.8 20.8 A14 5 -20 0 1 29.2 11.2" stroke-width="2.6"/><path class="head" d="M8.6 12 L9 3.5 L14.5 8 Z M23.4 12 L23 3.5 L17.5 8 Z" stroke-width="1.5" stroke-linejoin="round"/><circle class="head" cx="16" cy="16" r="9" stroke-width="0"/><path class="ring" d="M29.2 11.2 A14 5 -20 0 1 2.8 20.8" stroke-width="2.6"/></svg><span data-i18n="today.title">Today's arXiv</span></h1>
+      <div class="header-actions">
+        <label class="switch" data-i18n-title="lib.handle.tip" title="On: Papurr snatches PDF links, saves the paper in your folder and opens it. Off: PDF links behave as usual and nothing is saved.">
+          <input type="checkbox" id="capture-toggle" checked> <span data-i18n="lib.handle">Snatch PDF links</span>
+        </label>
+        <a class="ghost" href="library.html" data-i18n="opt.back">Library</a>
+        <a class="ghost" href="today.html" data-i18n="lib.today">Today's arXiv</a>
+        <a class="ghost inspire-link" href="https://inspirehep.net/" target="_blank" rel="noopener noreferrer" data-i18n-title="lib.inspire.tip" title="Open INSPIRE (in a new tab)"><span class="inspire-pill" data-i18n="lib.inspire">INSPIRE</span><svg class="ext-ic" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5H2.5v7h7v-2M7 2.5h2.5V5M9.5 2.5L5.5 6.5"/></svg></a>
+        <a class="ghost" href="options.html" data-i18n="lib.settings">Settings</a>
+        <a class="ghost" href="help.html" data-i18n="lib.help">Help</a>
+      </div>
+    </header>
+    <div class="toolbar">
+      <div class="group" id="today-cats"></div>
+      <div class="group">
+        <span id="today-updated" class="status"></span>
+        <button id="today-refresh" hidden data-i18n="today.refresh">Refresh</button>
+      </div>
+    </div>
+    <div id="today-days" class="toolbar" hidden></div>
+    <div id="today-ai" class="toolbar" hidden></div>
+    <div id="msg">Loading...</div>
+  </div>
+  <div id="list"></div>
+  <script src="vendor/katex/katex.min.js"></script>
+  <script src="common.js"></script>
+  <script src="ai.js"></script>
+  <script src="profile.js"></script>
+  <script src="rank.js"></script>
+  <script src="reason.js"></script>
+  <script src="translate.js"></script>
+  <script src="today.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!doctype html><meta charset=utf-8>
+<meta name="citation_doi" content="10.1007/JHEP01(2023)001">
+<meta name="citation_pdf_url" content="https://link.springer.com/content/pdf/10.1007/JHEP01(2023)001.pdf">
+<body><pre id="test-out">running</pre><div id="links"></div>
+<script>
+window.sent = []; window.storeVals = {}; let changeListener;
+window.chrome = { runtime: { id: "abc", sendMessage: (m) => sent.push(m) },
+  storage: { local: { get: async () => ({ captureEnabled: window.storeVals.captureEnabled }) }, onChanged: { addListener: (f) => (changeListener = f) } } };
+window.setEnabled = (v) => changeListener({ captureEnabled: { newValue: v } }, "local");
+</script>
+<script src="file://@EXT@/content.js"></script>
+<script>
+(async () => {
+  const res = [];
+  const check = (n, c, x) => res.push((c ? "ok   " : "FAIL ") + n + (c ? "" : " -> " + x));
+  await new Promise((r) => setTimeout(r, 100));
+  function click(href, opts = {}) {
+    sent.length = 0;
+    const a = document.createElement("a"); a.href = href; a.textContent = "x"; document.getElementById("links").append(a);
+    // The extension's handler runs first (capture on document). If the click still reaches the link itself,
+    // the extension did not take it; this listener records that and cancels it so the test page does not navigate away.
+    let reachedLink = false, preventedByExtension = false;
+    a.addEventListener("click", (e) => { reachedLink = true; preventedByExtension = e.defaultPrevented; e.preventDefault(); });
+    const ev = new MouseEvent("click", { bubbles: true, cancelable: true, button: 0, ...opts });
+    a.dispatchEvent(ev);
+    return { msg: sent[0], prevented: reachedLink ? preventedByExtension : ev.defaultPrevented };
+  }
+  let r = click("https://arxiv.org/pdf/2301.12345");
+  check("arXiv unversioned", r.msg && r.msg.type === "open-paper" && r.msg.id === "2301.12345" && r.msg.version === null && r.prevented, JSON.stringify(r));
+  r = click("https://arxiv.org/pdf/2301.12345v2");
+  check("arXiv versioned", r.msg.id === "2301.12345" && r.msg.version === "v2", JSON.stringify(r));
+  r = click("https://arxiv.org/pdf/2301.12345v10.pdf");
+  check("arXiv v10 .pdf", r.msg.id === "2301.12345" && r.msg.version === "v10", JSON.stringify(r));
+  r = click("https://arxiv.org/pdf/hep-th/9901001v1");
+  check("arXiv old style", r.msg.id === "hep-th/9901001" && r.msg.version === "v1", JSON.stringify(r));
+  r = click("https://articles.adsabs.harvard.edu/pdf/1970A%26A.....5...84Z");
+  check("ADS scanned article: its bibcode, the link, and the page's title", r.msg && r.msg.type === "open-ads" && r.msg.bibcode === "1970A&A.....5...84Z" && r.msg.pdf.startsWith("https://articles.adsabs.harvard.edu/pdf/") && typeof r.msg.title === "string" && Array.isArray(r.msg.authors) && r.prevented, JSON.stringify(r));
+  r = click("https://articles.adsabs.harvard.edu/pdf/not-a-bibcode");
+  check("an ADS address without a bibcode is left alone", !r.msg && !r.prevented);
+  r = click("https://arxiv.org/abs/2301.12345");
+  check("abs page link is left alone", !r.msg && !r.prevented);
+  r = click("https://example.com/paper.pdf");
+  check("unrelated PDF is left alone", !r.msg && !r.prevented);
+  r = click("https://arxiv.org/pdf/2301.12345", { ctrlKey: true });
+  check("ctrl-click is snatched like a plain click (no keyboard bypass any more)", r.msg && r.msg.type === "open-paper" && r.prevented, JSON.stringify(r));
+  r = click("https://arxiv.org/pdf/2301.12345", { shiftKey: true });
+  check("shift-click is snatched too", r.msg && r.msg.type === "open-paper" && r.prevented, JSON.stringify(r));
+  r = click("https://arxiv.org/pdf/2301.12345", { altKey: true });
+  check("alt-click and cmd-click as well", r.msg && r.prevented && (r = click("https://arxiv.org/pdf/2301.12345", { metaKey: true })).msg && r.prevented, JSON.stringify(r));
+  r = click("https://arxiv.org/pdf/2301.12345", { button: 1 });
+  check("middle-click bypasses", !r.msg && !r.prevented);
+  r = click("https://link.springer.com/content/pdf/10.1007/JHEP01(2023)001.pdf");
+  check("journal: link equal to citation_pdf_url", r.msg && r.msg.type === "open-journal" && r.msg.doi === "10.1007/jhep01(2023)001" && r.prevented, JSON.stringify(r));
+  r = click("https://journals.aps.org/prd/pdf/10.1103/PhysRevD.108.045001");
+  check("journal: DOI inside the PDF address", r.msg && r.msg.doi === "10.1103/physrevd.108.045001", JSON.stringify(r));
+  r = click("https://iopscience.iop.org/article/10.1088/1475-7516/2023/01/001/pdf");
+  check("journal: IOP style address", r.msg && r.msg.doi === "10.1088/1475-7516/2023/01/001", JSON.stringify(r));
+  r = click("https://link.springer.com/article/10.1007/JHEP01(2023)001");
+  check("journal: article page link (not a PDF) left alone", !r.msg && !r.prevented, JSON.stringify(r));
+  r = click("https://link.springer.com/content/pdf/10.1007/JHEP01(2023)001.pdf?download=1");
+  check("journal: query string ignored", r.msg && r.msg.doi === "10.1007/jhep01(2023)001", JSON.stringify(r));
+  r = click("https://www.science.org/doi/pdf/10.1126/science.abc1234");
+  check("journal: Science style address", r.msg && r.msg.doi === "10.1126/science.abc1234", JSON.stringify(r));
+  r = click("https://www.annualreviews.org/doi/pdf/10.1146/annurev-astro-082922-020000");
+  check("journal: Annual Reviews style address", r.msg && r.msg.doi === "10.1146/annurev-astro-082922-020000", JSON.stringify(r));
+  r = click("https://onlinelibrary.wiley.com/doi/pdfdirect/10.1002/asna.202300001");
+  check("journal: Wiley style address", r.msg && r.msg.doi === "10.1002/asna.202300001", JSON.stringify(r));
+  setEnabled(false);
+  r = click("https://arxiv.org/pdf/2301.12345");
+  check("switched off: arXiv link left alone", !r.msg && !r.prevented);
+  r = click("https://journals.aps.org/prd/pdf/10.1103/PhysRevD.108.045001");
+  check("switched off: journal link left alone", !r.msg && !r.prevented);
+  setEnabled(true);
+  r = click("https://arxiv.org/pdf/2301.12345");
+  check("switched on again", !!r.msg && r.prevented);
+  chrome.runtime.id = undefined;
+  r = click("https://arxiv.org/pdf/2301.12345");
+  check("dead script after reload: link left alone", !r.msg && !r.prevented);
+  chrome.runtime.id = "abc";
+  chrome.runtime.sendMessage = () => { throw new Error("Extension context invalidated."); };
+  r = click("https://arxiv.org/pdf/2301.12345");
+  check("sendMessage throws: link left alone", !r.prevented);
+  document.getElementById("test-out").textContent = res.join("\n");
+})();
+</script>

@@ -1,0 +1,5 @@
+# Created on each computer by native/install.py (contains that computer's Python path)
+native/paper_opener_launcher.sh
+native/paper_opener_launcher.bat
+native/com.paper_folder_manager.opener.json
+__pycache__/

@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "Papurr",
+  "version": "0.23.0",
+  "description": "Saves arXiv PDFs into a folder you choose, and opens the saved copy instead of downloading again.",
+  "permissions": ["storage", "scripting", "nativeMessaging", "contextMenus"],
+  "host_permissions": [
+    "https://arxiv.org/*",
+    "https://articles.adsabs.harvard.edu/*",
+    "https://export.arxiv.org/*",
+    "https://inspirehep.net/*",
+    "https://ui.adsabs.harvard.edu/*",
+    "https://journals.aps.org/*",
+    "https://link.springer.com/*",
+    "https://iopscience.iop.org/*",
+    "https://www.sciencedirect.com/*",
+    "https://*.sciencedirectassets.com/*",
+    "https://academic.oup.com/*",
+    "https://www.aanda.org/*",
+    "https://www.nature.com/*",
+    "https://www.science.org/*",
+    "https://www.annualreviews.org/*",
+    "https://onlinelibrary.wiley.com/*",
+    "https://www.mdpi.com/*",
+    "https://scipost.org/*",
+    "https://api.crossref.org/*",
+    "https://api.openalex.org/*"
+  ],
+  "optional_host_permissions": ["https://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
+  "action": {
+    "default_title": "Open paper library",
+    "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png" }
+  }
+}
