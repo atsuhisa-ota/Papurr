@@ -98,3 +98,81 @@ chrome.storage.onChanged.addListener(async (changes, area) => {
     chrome.contextMenus.update(MENU_ID, { title: tr("menu.handle") }).catch(() => {});
   }
 });
+
+// ---- A notification when a new announcement of Today's arXiv is out (off until the user switches it on in Settings) ----
+// Every NOTIFY_PERIOD_MIN minutes an alarm wakes this worker; by the clock it asks arXiv's feed only while an announcement is
+// due and not yet notified, at most NOTIFY_MAX_TRIES times per announcement (a holiday has none). It only counts the papers:
+// no AI is involved and nothing else is fetched. `todayNotifyState` = { seen: date of the last announcement notified (or
+// skipped at switching on), expected, tries } stays on this computer.
+const NOTIFY_ALARM = "today-notify";
+const NOTIFY_PERIOD_MIN = 30;
+const NOTIFY_MAX_TRIES = 8;
+const NOTIFY_ID_PREFIX = "today-";
+
+async function syncNotifyAlarm() {
+  const { todayNotify } = await chrome.storage.local.get("todayNotify");
+  const alarm = await chrome.alarms.get(NOTIFY_ALARM);
+  if (todayNotify && !alarm) {
+    // (what was announced before switching on is not news)
+    await chrome.storage.local.set({ todayNotifyState: { seen: lastAnnouncedDate(Date.now() - FEED_MARGIN_MS), expected: "", tries: 0 } });
+    chrome.alarms.create(NOTIFY_ALARM, { periodInMinutes: NOTIFY_PERIOD_MIN, delayInMinutes: 1 });
+  } else if (!todayNotify && alarm) {
+    await chrome.alarms.clear(NOTIFY_ALARM);
+    await chrome.storage.local.remove("todayNotifyState");
+  }
+}
+
+// Returns what it did, as a word (for the tests): "off", "no-permission", "no-categories", "up-to-date", "gave-up", "failed",
+// "waiting" (the feed does not show the new announcement yet), "empty" (it has no new paper of these categories), "notified".
+async function checkTodayNotify(now = Date.now()) {
+  const { todayNotify, todayNotifyState } = await chrome.storage.local.get(["todayNotify", "todayNotifyState"]);
+  if (!todayNotify) return "off";
+  if (!(await chrome.permissions.contains({ permissions: ["notifications"] }))) return "no-permission";
+  const categories = await getArxivCategories();
+  if (!categories.length) return "no-categories";
+  const expected = lastAnnouncedDate(now - FEED_MARGIN_MS);
+  const state = todayNotifyState || { seen: expected, expected: "", tries: 0 };
+  if (state.seen >= expected) return "up-to-date";
+  const tries = state.expected === expected ? state.tries : 0;
+  if (tries >= NOTIFY_MAX_TRIES) return "gave-up";
+  await chrome.storage.local.set({ todayNotifyState: { seen: state.seen, expected, tries: tries + 1 } }); // (counted before asking: a failing request is not repeated without limit)
+  let found;
+  try {
+    const res = await arxivApiFetch(arxivFeedUrl(categories));
+    const text = res.ok ? await res.text() : "";
+    if (!/<rss[\s>]/.test(text)) return "failed";
+    found = countArxivAnnouncement(text);
+  } catch (e) {
+    return "failed";
+  }
+  if (!found.date || found.date <= state.seen) return "waiting";
+  await chrome.storage.local.set({ todayNotifyState: { seen: found.date, expected, tries: 0 } });
+  if (!found.count) return "empty";
+  await setLanguageFromStorage();
+  const names = categories.length > 5 ? categories.slice(0, 5).join(", ") + "..." : categories.join(", ");
+  chrome.notifications.create(NOTIFY_ID_PREFIX + found.date, {
+    type: "basic", iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
+    title: tr("notify.title"), message: tr("notify.body", { n: found.count, cats: names }),
+  });
+  return "notified";
+}
+
+chrome.alarms.onAlarm.addListener((alarm) => { if (alarm.name === NOTIFY_ALARM) checkTodayNotify(); });
+// (chrome.notifications exists only once the user has allowed it, which happens when the switch is turned on: then this runs again)
+let clickListening = false;
+function listenForNotificationClicks() {
+  if (clickListening || !chrome.notifications) return;
+  clickListening = true;
+  chrome.notifications.onClicked.addListener((id) => {
+    if (!id.startsWith(NOTIFY_ID_PREFIX)) return;
+    chrome.notifications.clear(id);
+    chrome.tabs.create({ url: chrome.runtime.getURL("today.html") });
+  });
+}
+listenForNotificationClicks();
+chrome.permissions.onAdded.addListener(listenForNotificationClicks);
+chrome.runtime.onInstalled.addListener(syncNotifyAlarm);
+chrome.runtime.onStartup.addListener(() => syncNotifyAlarm().then(() => checkTodayNotify())); // (an announcement made while Chrome was closed)
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.todayNotify) syncNotifyAlarm().then(() => checkTodayNotify());
+});

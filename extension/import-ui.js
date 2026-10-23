@@ -7,7 +7,7 @@ const importStatusEl = document.getElementById("import-status");
 const importPanelEl = document.getElementById("import-panel");
 
 function importProblem(e) {
-  importStatusEl.textContent = tr("err.generic", { msg: e.message }) + (e instanceof IndexError && e.kind === "damaged" ? tr("err.repair") : "");
+  importStatusEl.textContent = tr("err.generic", { msg: e.message }) + (e instanceof IndexError && e.kind !== "newer" ? tr("err.repair") : "");
 }
 
 function node(tag, className, text) {

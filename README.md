@@ -1,6 +1,6 @@
 # Papurr
 
-*日本語版は [README.ja.md](README.ja.md) をご覧ください。*
+*日本語: [README.ja.md](README.ja.md) · 简体中文: [README.zh.md](README.zh.md)*
 
 A Chrome extension that keeps your papers in **one folder you choose** and manages them with an **index it builds**.
 Click a PDF link in the web databases you already use: if you have the paper, your own copy opens; if not, it is saved
@@ -32,7 +32,7 @@ first and then opened. Projects become tags, not copies.
 - **Library page**: search, sorting, filters, tags, links to arXiv / INSPIRE / NASA ADS
 - **A note for each paper** (a Markdown file in the folder; formulas are shown typeset)
 - **Bring in the PDFs you already have**: Papurr reads them, and renames and adds only those you approve
-- **Today's arXiv**: the latest papers of the categories you follow, with abstracts
+- **Today's arXiv**: the latest papers of the categories you follow, with abstracts; an optional notification when a new announcement is out
 - **INSPIRE search**: search INSPIRE's database through its API; save a result with one click
 - **AI features (optional)**: with your own Claude, ChatGPT or Kimi Code plan, rank Today's arXiv by relevance to your
   research, explain why a paper is recommended, translate and summarize

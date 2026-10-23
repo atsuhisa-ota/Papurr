@@ -765,7 +765,7 @@ async function loadPending() {
 }
 
 function fail(e) {
-  if (e instanceof IndexError) say(e.message + (e.kind === "damaged" ? tr("err.repair") : ""));
+  if (e instanceof IndexError) say(e.message + (e.kind !== "newer" ? tr("err.repair") : ""));
   else if (e.name === "NotFoundError") say(tr("folder.notfound"));
   else say(tr("err.generic", { msg: e.message }));
 }

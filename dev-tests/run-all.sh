@@ -33,6 +33,7 @@ section "importing PDFs (node)";                  node test-import.js     | tee 
 section "research profile (node)";                node test-profile.js    | tee -a "$OUT"
 section "Today's arXiv and the clock (node)";   node test-today-clock.js | tee -a "$OUT"
 section "searching INSPIRE (node)";                 node test-inspire.js    | tee -a "$OUT"
+section "the Library's INSPIRE-style search (node)";   node test-inspire-style.js | tee -a "$OUT"
 section "ranking (node)";                          node test-rank.js       | tee -a "$OUT"
 section "full-text summary (node)";               node test-summary.js    | tee -a "$OUT"
 section "translation (node)";                      node test-translate.js  | tee -a "$OUT"

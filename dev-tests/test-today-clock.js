@@ -2,14 +2,15 @@
 // Conditions: every weekday and hour around the announcement time, a weekend, the daylight-saving change, a clock set back.
 const fs = require("fs"), vm = require("vm"), path = require("path");
 const ext = path.join(__dirname, "..", "extension");
-const rank = fs.readFileSync(path.join(ext, "rank.js"), "utf8");
+const common = fs.readFileSync(path.join(ext, "common.js"), "utf8");
 const today = fs.readFileSync(path.join(ext, "today.js"), "utf8");
-const cut = (from, to) => { const a = today.indexOf(from), b = today.indexOf(to, a); if (a < 0 || b < 0) throw new Error("marker not found: " + from); return today.slice(a, b); };
-const code = rank.slice(rank.indexOf("const ARXIV_DEADLINE_HOUR"), rank.indexOf("function announcementStart")) +
-  cut("const ANNOUNCE_HOUR", "// Earlier announcements:") + cut("// The moment of a given hour", "// The submission window") +
+const cut = (src, from, to) => { const a = src.indexOf(from), b = src.indexOf(to, a); if (a < 0 || b < 0) throw new Error("marker not found: " + from); return src.slice(a, b); };
+// the clock itself lives in common.js (Today's arXiv and the notification in background.js share it); the freshness of the kept list in today.js
+const code = common.slice(common.indexOf("const ARXIV_DEADLINE_HOUR")); // (the clock is the last part of common.js)
+const code2 = code + cut(today, "const ESTIMATE_CACHE_MS", "\n") + "\n" + cut(today, "// A kept list is fresh", "// The submission window") +
   "\nthis.api = { lastAnnouncedDate, cacheIsFresh, nextWeekday, announcedAt, easternMoment, ESTIMATE_CACHE_MS };";
 const ctx = vm.createContext({});
-vm.runInContext(code.replace(/\bconst /g, "var "), ctx);
+vm.runInContext(code2.replace(/\bconst /g, "var "), ctx);
 const { lastAnnouncedDate: last, cacheIsFresh: fresh, nextWeekday, announcedAt, easternMoment } = ctx.api;
 const results = []; let failed = 0;
 const t = (name, ok, extra) => { results.push((ok ? "ok   " : "FAIL ") + name + (ok ? "" : " -> " + extra)); if (!ok) failed++; };

@@ -61,7 +61,9 @@ t("there is no retry loop in ai.js", !/retry|attempts|for \(let attempt/i.test(a
 const bg = read("background.js");
 t("the service worker and the content script know nothing about the AI", !/aiRun|aiStatus|getAiSettings|connectNative|importScripts\([^)]*ai\.js/.test(bg) && !/\bai\b/i.test(read("content.js")));
 const manifest = JSON.parse(read("manifest.json"));
-t("no alarms permission and no AI file among the content scripts", !(manifest.permissions || []).includes("alarms") && !JSON.stringify(manifest.content_scripts || []).includes("ai"));
+t("no AI file among the content scripts", !JSON.stringify(manifest.content_scripts || []).includes("ai"));
+// The alarm (permission "alarms") exists only for the notification of Today's arXiv in background.js, which knows nothing about the AI.
+t("the alarms are used by background.js alone (never by an AI file or a page)", fs.readdirSync(path.join(__dirname, "..", "extension")).filter((f) => f.endsWith(".js") && f !== "background.js").every((f) => !/chrome\.alarms/.test(read(f))));
 
 const ui = read("ai-ui.js");
 const checkAt = ui.indexOf('aiEl("ai-check").addEventListener("click"');

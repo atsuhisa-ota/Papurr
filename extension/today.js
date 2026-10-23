@@ -22,8 +22,6 @@ const FEED_DETAILS_PER_REQUEST = window.TODAY_IDS_PER_REQUEST || 100; // ids per
 // arXiv publishes once a day. A list made from submission times (no feed: weekends) is only an estimate of a growing
 // batch, so it is kept for a shorter time. (Holidays without an announcement are not modelled: the list is then just
 // fetched again once after each regular announcement time.)
-const ANNOUNCE_HOUR = 20;
-const FEED_MARGIN_MS = 30 * 60 * 1000;
 const ESTIMATE_CACHE_MS = 6 * 60 * 60 * 1000;
 // Earlier announcements: the list of each announcement that was fetched is kept on this computer (`todayHistory`), for the
 // last HISTORY_DAYS announcement days of the followed categories. arXiv's feed only has the latest announcement; an
@@ -218,36 +216,8 @@ async function renderDays() {
   daysEl.append(group);
 }
 
-// The moment of a given hour (US Eastern time) on a date "YYYY-MM-DD".
-function easternMoment(date, hour) {
-  const [y, m, d] = date.split("-").map(Number);
-  for (const offset of [4, 5]) { // summer or winter time
-    const t = Date.UTC(y, m - 1, d, hour + offset);
-    if (arxivEastern(t).h === hour) return t;
-  }
-  return Date.UTC(y, m - 1, d, hour + 5);
-}
 // The moment of arXiv's deadline (14:00 US Eastern time) on a date.
 const deadlineOn = (date) => easternMoment(date, ARXIV_DEADLINE_HOUR);
-
-const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
-const isWeekday = (date) => ![0, 6].includes(new Date(date + "T12:00:00Z").getUTCDay());
-const addDays = (date, n) => isoDay(Date.parse(date + "T12:00:00Z") + n * 86400000);
-const nextWeekday = (date) => { let d = addDays(date, 1); while (!isWeekday(d)) d = addDays(d, 1); return d; };
-
-// The announcement dated `date` (a weekday) is made at 20:00 Eastern time on the day before.
-const announcedAt = (date) => easternMoment(addDays(date, -1), ANNOUNCE_HOUR);
-
-// The date of the latest announcement that has been made by `now` (ms), by the clock: it needs no feed.
-function lastAnnouncedDate(now) {
-  const e = arxivEastern(now);
-  const today = `${e.y}-${String(e.m).padStart(2, "0")}-${String(e.d).padStart(2, "0")}`;
-  for (let k = 1; k >= -8; k--) {
-    const date = addDays(today, k);
-    if (isWeekday(date) && announcedAt(date) <= now) return date;
-  }
-  return today; // (not reached)
-}
 
 // A kept list is fresh until the next announcement has been made and the feed has had time to show it.
 function cacheIsFresh(cache, now) {

@@ -5,7 +5,7 @@ papers or, when you click, to fetch a PDF. Papurr is not affiliated with, or end
 
 | Service | What Papurr uses it for | What is sent |
 | --- | --- | --- |
-| **arXiv**: the API and the feed (`export.arxiv.org`) | Titles, authors, abstracts and versions; the list of Today's arXiv | arXiv identifiers, or the categories you follow |
+| **arXiv**: the API and the feed (`export.arxiv.org`) | Titles, authors, abstracts and versions; the list of Today's arXiv | arXiv identifiers, or the categories you follow (with the notification switched on, the feed of those categories is asked in the background, at most 8 times per announcement) |
 | **arXiv** (`arxiv.org`) | The PDF of the paper you click; the HTML version, when you ask for a summary | The address of that paper |
 | **INSPIRE** (`inspirehep.net`) | The arXiv number of a journal paper; "My papers"; your research profile; the INSPIRE page's search, a result's BibTeX | A DOI or arXiv number; the INSPIRE author ID you enter; the search you type, after you press Enter; the number of a result whose BibTeX you ask for |
 | **Crossref** (`api.crossref.org`) | Title, authors and journal of a DOI or of a scanned article; identifying a PDF you import | A DOI or bibcode; the title written in a PDF you import |

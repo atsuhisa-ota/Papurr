@@ -355,7 +355,7 @@ async function run(dir) {
 
 function fail(e) {
   msgEl.textContent = tr("err.generic", { msg: e.message });
-  if (e instanceof IndexError && e.kind === "damaged") msgEl.textContent += tr("err.repair");
+  if (e instanceof IndexError && e.kind !== "newer") msgEl.textContent += tr("err.repair");
   if (e.name === "NotFoundError") msgEl.textContent = tr("folder.notfound");
   if (journalPdfUrl) {
     fallbackEl.href = journalPdfUrl; // so the click is never a dead end

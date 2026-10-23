@@ -113,6 +113,17 @@
     check("Enter in the box adds the category too", (await chosenCats()).includes("q-bio.NC"));
     chips().find((c) => c.textContent === "q-bio.NC").click(); await sleep(80);
     check("a custom category disappears when it is unselected", !chips().some((c) => c.textContent === "q-bio.NC"));
+    // the notification for a new announcement
+    const nt = $("today-notify"), notifyOn = async () => (await chrome.storage.local.get("todayNotify")).todayNotify;
+    check("the notification switch is in the Today's arXiv section and is off at first; nothing was asked", !!nt && !nt.checked && !!nt.closest("section").querySelector("#arxiv-cats") && permAsked.length === 0 && !(await notifyOn()));
+    permDeny = true; nt.click(); await sleep(80); permDeny = false;
+    check("without the permission it stays off and says why", !nt.checked && !(await notifyOn()) && $("notify-status").textContent === tr("today.notify.denied"), $("notify-status").textContent);
+    nt.click(); await sleep(80);
+    check("switching it on asks for the permission to show notifications (from the click) and is remembered", nt.checked && permAsked.join() === "notifications,notifications" && (await notifyOn()) === true && $("notify-status").textContent === "", permAsked.join());
+    nt.click(); await sleep(60);
+    check("switching it off is remembered", !nt.checked && (await notifyOn()) === false);
+    notifyLevel = "denied"; nt.click(); await sleep(80); notifyLevel = "granted";
+    check("when the system does not let Chrome show notifications, it says so", nt.checked && $("notify-status").textContent === tr("today.notify.blocked"), $("notify-status").textContent);
   } catch (e) { results.push("EXCEPTION " + e.stack); }
   document.getElementById("test-out").textContent = results.join("\n");
 })();

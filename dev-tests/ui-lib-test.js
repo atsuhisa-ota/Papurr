@@ -89,7 +89,7 @@
     // ---- search and sort
     const s = document.getElementById("search");
     const sc0 = document.getElementById("search-scope");
-    check("the search looks at authors by default (no Standard any more), and the box says so", sc0.value === "authors" && ![...sc0.options].some((o) => o.value === "standard") && [...sc0.options].map((o) => o.value).join() === "authors,title,number,tag,notes" && s.placeholder === "Search by author", [...sc0.options].map((o) => o.value).join() + " | " + s.placeholder);
+    check("the search uses the INSPIRE syntax by default (no Standard any more), and the box says so", sc0.value === "inspire" && ![...sc0.options].some((o) => o.value === "standard") && [...sc0.options].map((o) => o.value).join() === "inspire,authors,title,number,tag,notes" && s.placeholder.startsWith("In INSPIRE syntax"), [...sc0.options].map((o) => o.value).join() + " | " + s.placeholder);
     sc0.value = "title"; sc0.dispatchEvent(new Event("change")); await sleep(50);
     check("choosing a scope changes what the box says", s.placeholder === "Search by title");
     s.value = "beta"; s.dispatchEvent(new Event("input")); await sleep(300);
@@ -100,6 +100,14 @@
     sc0.value = "number"; sc0.dispatchEvent(new Event("change")); await sleep(50);
     s.value = "9901001"; s.dispatchEvent(new Event("input")); await sleep(300);
     check("the arXiv number scope finds a paper by its number", papersShown().length === 1 && papersShown()[0].textContent.includes("Gamma"), papersShown().length);
+    sc0.value = "inspire"; sc0.dispatchEvent(new Event("change")); await sleep(50);
+    check("the INSPIRE-syntax scope says how to write", s.placeholder.includes("ea ota"), s.placeholder);
+    s.value = "t beta or eprint 9901001"; s.dispatchEvent(new Event("input")); await sleep(300);
+    check("INSPIRE syntax: 'or' joins two fields", papersShown().length === 2, papersShown().length);
+    s.value = "(t alpha or t gamma) and not eprint 9901"; s.dispatchEvent(new Event("input")); await sleep(300);
+    check("INSPIRE syntax: brackets and 'and not' leave out a number", papersShown().length === 1 && papersShown()[0].textContent.includes("Alpha"), papersShown().map((e) => e.textContent.slice(0, 40)).join(" | "));
+    s.value = "t (beta"; s.dispatchEvent(new Event("input")); await sleep(300);
+    check("INSPIRE syntax: a broken query does not fail, it is searched as words", papersShown().length <= 4);
     sc0.value = "authors"; sc0.dispatchEvent(new Event("change")); await sleep(50);
     s.value = ""; s.dispatchEvent(new Event("input")); await sleep(300);
     const sk = document.getElementById("sort-key");

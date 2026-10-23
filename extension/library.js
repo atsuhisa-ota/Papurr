@@ -13,6 +13,7 @@ const managerEl = document.getElementById("tag-manager");
 const manageBtn = document.getElementById("manage-tags");
 const tagFilterEl = document.getElementById("tag-filter");
 const recoveryEl = document.getElementById("recovery");
+const syncNoteEl = document.getElementById("sync-note");
 const cancelBtn = document.getElementById("cancel-rebuild");
 const importBannerEl = document.getElementById("import-banner");
 const scopeEl = document.getElementById("search-scope");
@@ -411,6 +412,7 @@ const SEARCH_SCOPES = {
   number: (p) => p.id + " " + (p.doi || ""),
   tag: (p) => tagsOf(p).join(" "),
   notes: (p) => (p.noteFile && (noteTexts.get(p.noteFile) || {}).text) || "",
+  inspire: () => "", // (matched by inspireStyleMatcher on the whole paper: see render)
 };
 const NOTE_FILTERS = {
   all: () => true,
@@ -426,10 +428,11 @@ function render() {
   sortDirBtn.title = sortDesc ? tr("sort.desc.tip") : tr("sort.asc.tip");
   const words = searchEl.value.toLowerCase().split(/\s+/).filter(Boolean);
   const searched = SEARCH_SCOPES[scopeEl.value] || SEARCH_SCOPES.authors;
+  const inspireStyle = scopeEl.value === "inspire" ? inspireStyleMatcher(searchEl.value) : null;
   const filter = NOTE_FILTERS[noteFilterEl.value] || NOTE_FILTERS.all;
   const shown = papers.filter((p) => {
     const text = searched(p).toLowerCase();
-    return words.every((w) => text.includes(w)) && [...selectedTags].every((t) => tagsOf(p).includes(t)) && filter(p) &&
+    return (inspireStyle ? inspireStyle(p) : words.every((w) => text.includes(w))) && [...selectedTags].every((t) => tagsOf(p).includes(t)) && filter(p) &&
       !(sortKeyEl.value === "arxiv" && !isArxivKey(p.id)) && !(sortKeyEl.value === "note" && !p.noteInfo); // journal-only papers have no arXiv number; papers without a note have no note date
   });
   const scrollTop = listEl.scrollTop;
@@ -744,11 +747,11 @@ async function showRecovery(dir, err) {
   text.textContent = err.message;
   recoveryEl.append(text);
   msgEl.textContent = "";
-  if (err.kind !== "damaged") return;
+  if (err.kind === "newer") return;
 
   const note = document.createElement("p");
   note.className = "muted";
-  note.textContent = tr("recovery.note", { name: DAMAGED_NAME });
+  note.textContent = err.kind === "missing" ? tr("recovery.note.missing") : tr("recovery.note", { name: DAMAGED_NAME });
   recoveryEl.append(note);
 
   const restore = document.createElement("button");
@@ -813,7 +816,7 @@ function highlight(id) {
   const find = () => listEl.querySelector('.paper[data-id="' + CSS.escape(id) + '"]');
   if (!find() && papers.some((p) => p.id === id)) {
     searchEl.value = "";
-    scopeEl.value = "authors";
+    scopeEl.value = "inspire";
     showPlaceholder();
     noteFilterEl.value = "all";
     selectedTags.clear();
@@ -842,17 +845,30 @@ async function reloadQuietly() {
   } catch (e) {} // the next full load shows any problem
 }
 
+let mergedCopies = 0;
+
+// Say so when the sync made conflict copies of the index: merged ones (they are deleted), or ones that could not be read.
+async function showSyncNote(merged) {
+  const left = await findConflictCopies(currentDir).catch(() => []);
+  const parts = [];
+  if (merged) parts.push(tr("sync.merged", { n: merged }));
+  if (left.length) parts.push(tr("sync.left", { n: left.length, names: left.join(", ") }));
+  syncNoteEl.textContent = parts.join(" ");
+  syncNoteEl.hidden = !parts.length;
+}
+
 async function showLibrary(dir) {
   currentDir = dir;
   dbLinks = await getDbLinks();
   try {
-    await mergeConflictCopies(dir); // pick up changes made on another computer
+    mergedCopies = await mergeConflictCopies(dir); // pick up changes made on another computer
     papers = await readPapers(dir);
   } catch (e) {
     if (e instanceof IndexError) return showRecovery(dir, e);
     throw e;
   }
   recoveryEl.hidden = true;
+  await showSyncNote(mergedCopies);
   limit = PAGE;
   if (noteFilterEl.value === "mine" && !myPapers) await loadMyPapers().catch(() => {});
   if (scopeEl.value === "notes" && searchEl.value.trim()) await loadNoteTexts().catch(() => {}); // (a remembered search in the notes)
@@ -890,7 +906,7 @@ async function main() {
 }
 
 // The search box says what it searches (the scope chosen next to it).
-const PLACEHOLDERS = { authors: "search.ph.authors", title: "search.ph.title", number: "search.ph.number", tag: "search.ph.tag", notes: "search.ph.notes" };
+const PLACEHOLDERS = { authors: "search.ph.authors", title: "search.ph.title", number: "search.ph.number", tag: "search.ph.tag", notes: "search.ph.notes", inspire: "search.ph.inspire.lib" };
 function showPlaceholder() {
   searchEl.placeholder = tr(PLACEHOLDERS[scopeEl.value] || PLACEHOLDERS.authors);
 }

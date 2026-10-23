@@ -6,7 +6,7 @@ const HELP_SECTIONS = [
   ["library", "help.library.t", [["ul", ["help.library.1", "help.library.2", "help.library.3", "help.library.4", "help.library.5"]]]],
   ["notes", "help.notes.t", [["p", "help.notes.1"], ["p", "help.notes.2"]]],
   ["import", "help.import.t", [["p", "help.import.1"], ["ol", ["help.import.2", "help.import.3"]], ["p", "help.import.4"]]],
-  ["today", "help.today.t", [["p", "help.today.1"], ["p", "help.today.2"], ["p", "help.today.3"]]],
+  ["today", "help.today.t", [["p", "help.today.1"], ["p", "help.today.2"], ["p", "help.today.3"], ["p", "help.today.4"]]],
   ["inspire", "help.inspire.t", [["p", "help.inspire.1"]]],
   ["sites", "help.sites.t", [["p", "help.sites.1"], ["p", "help.sites.2"], ["p", "help.sites.3"]]],
   ["openwith", "help.openwith.t", [["p", "help.openwith.1"], ["ul", ["help.openwith.6", ["help.openwith.7", ["help.openwith.2", "help.openwith.3", "help.openwith.4"]]]], ["p", "help.openwith.5"]]],

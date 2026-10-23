@@ -25,8 +25,9 @@
       </div>
     </header>
     <div class="search-row">
-      <input id="search" type="search" placeholder="Search by author" autofocus>
+      <input id="search" type="search" placeholder="In INSPIRE syntax, e.g. ea ota, atsuhisa" autofocus>
       <select id="search-scope" data-i18n-title="search.scope.tip" title="Where to search">
+        <option value="inspire" data-i18n="search.scope.inspire">INSPIRE syntax</option>
         <option value="authors" data-i18n="search.scope.authors">Authors</option>
         <option value="title" data-i18n="search.scope.title">Title</option>
         <option value="number" data-i18n="search.scope.number">arXiv number</option>
@@ -67,6 +68,7 @@
     <datalist id="tag-list"></datalist>
     <div id="msg">Loading...</div>
     <div id="index-time" class="status"></div>
+    <div id="sync-note" class="status" hidden></div>
     <button id="grant" hidden data-i18n="grant.button">Grant access to the folder</button>
     <p id="grant-hint" class="muted" hidden data-i18n="grant.hint">Tip: if Chrome offers “Allow on every visit”, choose it to avoid being asked again.</p>
   </div>
@@ -75,6 +77,7 @@
   <script src="import.js"></script>
   <script src="ai.js"></script>
   <script src="profile.js"></script>
+  <script src="inspire-style.js"></script>
   <script src="library.js"></script>
 </body>
 </html>

@@ -91,7 +91,7 @@ class IndexError extends Error {
   constructor(message, kind) {
     super(message);
     this.name = "IndexError";
-    this.kind = kind; // "damaged" or "newer"
+    this.kind = kind; // "damaged", "newer" or "missing"
   }
 }
 
@@ -162,8 +162,16 @@ async function writeFileText(dir, name, text) {
 
 const serializeIndex = (papers) => JSON.stringify({ schemaVersion: SCHEMA_VERSION, papers }, null, 2);
 
+// index.json is gone but earlier copies of it are in the folder (the backup, or a copy the sync made when it moved the
+// file away): a new empty index here would silently hide the whole library, so the callers stop and the Library offers
+// the way out. A folder that never had an index (no copy at all) simply starts a new one.
+async function refuseMissingIndex(dir) {
+  if ((await hasBackup(dir)) || (await findConflictCopies(dir)).length) throw new IndexError(tr("index.missing"), "missing");
+}
+
 async function readIndex(dir) {
   const text = await readFileText(dir, INDEX_NAME);
+  if (text === null) await refuseMissingIndex(dir);
   return text === null ? {} : parseIndexText(text);
 }
 
@@ -205,6 +213,7 @@ async function refreshBackup(dir, goodText) {
 async function updateIndex(dir, mutate) {
   return withIndexLock(async () => {
     const text = await readFileText(dir, INDEX_NAME);
+    if (text === null) await refuseMissingIndex(dir);
     const papers = text === null ? {} : parseIndexText(text);
     const before = JSON.stringify(papers);
     const result = await mutate(papers);
@@ -249,9 +258,18 @@ async function hasBackup(dir) {
 
 // ---- Merging sync conflict copies ----
 // Cloud services create files like "index (conflicted copy 2026-10-08).json", "index (1).json" or
-// "index.sync-conflict-....json" when two computers changed index.json at the same time.
+// "index.sync-conflict-....json" when two computers changed index.json at the same time; some tools append to the whole
+// name instead ("index.json.conflict2"). index.json.bak is Papurr's own backup and is not a copy.
 function isConflictCopyName(name) {
+  if (/^index\.json\..*conflict/i.test(name)) return true;
   return /^index.+\.json$/i.test(name) && name.toLowerCase() !== DAMAGED_NAME;
+}
+
+// Names of the conflict copies that are in the folder now (merged ones are deleted, so these are the ones left).
+async function findConflictCopies(dir) {
+  const names = [];
+  for await (const [name, handle] of dir.entries()) if (handle.kind === "file" && isConflictCopyName(name)) names.push(name);
+  return names;
 }
 
 // Combine two entries for the same paper: the more recently modified one wins field by field,
@@ -276,8 +294,7 @@ function mergePapers(into, other) {
 // Returns how many copies were merged.
 async function mergeConflictCopies(dir) {
   return withIndexLock(async () => {
-    const names = [];
-    for await (const [name, handle] of dir.entries()) if (handle.kind === "file" && isConflictCopyName(name)) names.push(name);
+    const names = await findConflictCopies(dir);
     if (!names.length) return 0;
 
     const text = await readFileText(dir, INDEX_NAME);
@@ -347,12 +364,31 @@ const arxivIdListUrl = (ids) => "https://export.arxiv.org/api/query?id_list=" + 
 // Read the feed: { date: "YYYY-MM-DD" of the announcement (or ""), items: [{ id, type, version, title, abstract,
 // categories, authors, authorCount }] } with type "new", "cross", "replace" or "replace-cross". The feed carries
 // everything Today's arXiv shows except the submission time, so the API is not needed for the latest announcement.
+// The date "YYYY-MM-DD" in a feed's pubDate ("Thu, 15 Oct 2026 00:00:00 -0400"), or "".
+function arxivFeedDate(pub) {
+  const m = /(\d{1,2}) (\w{3}) (\d{4})/.exec(pub || "");
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return m && months.includes(m[2]) ? m[3] + "-" + String(months.indexOf(m[2]) + 1).padStart(2, "0") + "-" + m[1].padStart(2, "0") : "";
+}
+
+// How many papers a feed announces (new submissions and cross-lists, each paper once, as Today's arXiv lists them) and its
+// date, read from the text without a DOM (the background service worker has none): { date, count }.
+function countArxivAnnouncement(xmlText) {
+  const text = String(xmlText);
+  const first = text.indexOf("<item>");
+  const head = first < 0 ? text : text.slice(0, first);
+  const ids = new Set();
+  for (const item of first < 0 ? [] : text.slice(first).split("<item>").slice(1)) {
+    const id = /<link>\s*[^<]*?abs\/(.+?)(?:v\d+)?\s*<\/link>/.exec(item);
+    const type = /<arxiv:announce_type>\s*([\w-]+)\s*<\/arxiv:announce_type>/.exec(item);
+    if (id && type && (type[1] === "new" || type[1] === "cross")) ids.add(id[1]);
+  }
+  return { date: arxivFeedDate((/<pubDate>([^<]*)<\/pubDate>/.exec(head) || [])[1]), count: ids.size };
+}
+
 function parseArxivFeed(xmlText) {
   const xml = new DOMParser().parseFromString(xmlText, "application/xml");
-  const pub = (xml.querySelector("channel > pubDate") || {}).textContent || "";
-  const m = /(\d{1,2}) (\w{3}) (\d{4})/.exec(pub);
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const date = m && months.includes(m[2]) ? m[3] + "-" + String(months.indexOf(m[2]) + 1).padStart(2, "0") + "-" + m[1].padStart(2, "0") : "";
+  const date = arxivFeedDate((xml.querySelector("channel > pubDate") || {}).textContent);
   const items = [];
   for (const item of xml.querySelectorAll("item")) {
     const id = /abs\/(.+?)(?:v\d+)?$/.exec(((item.querySelector("link") || {}).textContent || "").trim());
@@ -1120,4 +1156,45 @@ function normalizeAiText(text) {
 function jsonLikeField(text, key) {
   const m = new RegExp('^\\s*(?:```(?:json)?\\s*)?\\{\\s*"' + key + '"\\s*:\\s*"([\\s\\S]*)"\\s*\\}\\s*(?:```)?\\s*$').exec(String(text));
   return m ? m[1].replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\"/g, '"').replace(/\\\\/g, "\\") : null;
+}
+
+// ---- arXiv's announcement clock (Today's arXiv, the ranking and the notification in background.js) ----
+// arXiv announces at 20:00 US Eastern time on Sunday to Thursday; the announcement is dated the next weekday.
+const ARXIV_DEADLINE_HOUR = 14; // US Eastern time
+
+function arxivEastern(ms) {
+  const parts = {};
+  for (const p of new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", hourCycle: "h23", weekday: "short" }).formatToParts(new Date(ms))) parts[p.type] = p.value;
+  return { y: +parts.year, m: +parts.month, d: +parts.day, h: +parts.hour, weekday: parts.weekday };
+}
+const ANNOUNCE_HOUR = 20;
+const FEED_MARGIN_MS = 30 * 60 * 1000;
+
+// The moment of a given hour (US Eastern time) on a date "YYYY-MM-DD".
+function easternMoment(date, hour) {
+  const [y, m, d] = date.split("-").map(Number);
+  for (const offset of [4, 5]) { // summer or winter time
+    const t = Date.UTC(y, m - 1, d, hour + offset);
+    if (arxivEastern(t).h === hour) return t;
+  }
+  return Date.UTC(y, m - 1, d, hour + 5);
+}
+
+const isoDay = (ms) => new Date(ms).toISOString().slice(0, 10);
+const isWeekday = (date) => ![0, 6].includes(new Date(date + "T12:00:00Z").getUTCDay());
+const addDays = (date, n) => isoDay(Date.parse(date + "T12:00:00Z") + n * 86400000);
+const nextWeekday = (date) => { let d = addDays(date, 1); while (!isWeekday(d)) d = addDays(d, 1); return d; };
+
+// The announcement dated `date` (a weekday) is made at 20:00 Eastern time on the day before.
+const announcedAt = (date) => easternMoment(addDays(date, -1), ANNOUNCE_HOUR);
+
+// The date of the latest announcement that has been made by `now` (ms), by the clock: it needs no feed.
+function lastAnnouncedDate(now) {
+  const e = arxivEastern(now);
+  const today = `${e.y}-${String(e.m).padStart(2, "0")}-${String(e.d).padStart(2, "0")}`;
+  for (let k = 1; k >= -8; k--) {
+    const date = addDays(today, k);
+    if (isWeekday(date) && announcedAt(date) <= now) return date;
+  }
+  return today; // (not reached)
 }

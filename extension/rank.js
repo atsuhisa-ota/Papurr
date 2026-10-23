@@ -103,14 +103,6 @@ async function saveScores(stamp, newScores, now = Date.now(), model = "") {
 // time (Friday 14:00 to Monday 14:00 over the weekend), and the API lists only announced papers; so the latest
 // announcement is the newest paper plus everything submitted after the last weekday deadline before it.
 // (A holiday without announcement makes the next one larger; then only its last part is taken. Good enough for a guide.)
-const ARXIV_DEADLINE_HOUR = 14; // US Eastern time
-
-function arxivEastern(ms) {
-  const parts = {};
-  for (const p of new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", hourCycle: "h23", weekday: "short" }).formatToParts(new Date(ms))) parts[p.type] = p.value;
-  return { y: +parts.year, m: +parts.month, d: +parts.day, h: +parts.hour, weekday: parts.weekday };
-}
-
 // The moment of the last weekday deadline before `time` (ISO text or ms).
 function announcementStart(time) {
   const t = typeof time === "number" ? time : Date.parse(time);

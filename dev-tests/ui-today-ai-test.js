@@ -180,10 +180,12 @@
       const trBtn = (t) => [...itemOf(t).querySelectorAll(".reactions button")].find((b) => b.textContent.startsWith(T("Translate (Français)", "翻訳(Français)")) || b.textContent.startsWith(T("Show the translation", "訳を表示")) || b.textContent.startsWith(T("Hide the translation", "訳を隠す")));
       check("with another language: Translate (Français) with a short estimate, and the tooltip says it uses quota", !!trBtn("Older still") && /~|約/.test(trBtn("Older still").textContent) && trBtn("Older still").title.includes(T("subscription quota", "利用枠")), trBtn("Older still") && trBtn("Older still").textContent);
       const c0 = connects;
-      nextReply = { ok: true, result: { translation: "Plus ancien. plus de texte" }, usage: { input_tokens: 500, output_tokens: 40 }, durationMs: 2000, models: ["claude-haiku-5-5"] };
+      nextReply = { ok: true, result: { translation: "Plus ancien. plus de texte $$\\int_0^\\infty \\frac{x^{2}}{e^{x}-1}\\,dx \;=\; \\sum_{n=1}^{\\infty}\\frac{1}{n^{3}}\\,\\Gamma(3)\;=\;2\\zeta(3)\;\\approx\;2.404113806319188570799476323022899981529972584680997205\;\\text{(unbreakable)}$$ fin." }, usage: { input_tokens: 500, output_tokens: 40 }, durationMs: 2000, models: ["claude-haiku-5-5"] };
       trBtn("Older still").click(); await sleep(300);
       check("the request asks for French and carries the abstract", connects === c0 + 1 && lastPort.sent.prompt.includes("into French") && lastPort.sent.prompt.includes("Older. more text") && lastPort.sent.schema.includes('"translation"'), lastPort.sent.prompt.slice(0, 200));
       const tbox = itemOf("Older still").querySelector(".translation");
+      { const item = itemOf("Older still"), r = (e) => e.getBoundingClientRect();
+        check("a long formula in a translation stays inside its box: the box and the paper do not grow (the formula scrolls)", !!tbox && !!tbox.querySelector(".katex") && r(tbox).right <= r(item).right + 1 && item.scrollWidth <= item.clientWidth + 1, tbox ? r(tbox).right + " / " + r(item).right : "no box"); }
       check("the translation is shown under the abstract, labelled with its language; kept and logged", !!tbox && tbox.textContent.includes("Plus ancien.") && tbox.textContent.includes("Français") && tbox.previousElementSibling.classList.contains("abstract") && (await chrome.storage.local.get("aiTranslations")).aiTranslations["2610.00000"].fr.text.startsWith("Plus") && (await getAiUsage()).slice(-1)[0].kind === "translation");
       trBtn("Older still").click(); await sleep(50);
       check("hiding and showing again uses no quota", !itemOf("Older still").querySelector(".translation") && connects === c0 + 1);

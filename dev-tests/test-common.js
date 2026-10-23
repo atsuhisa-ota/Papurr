@@ -217,6 +217,45 @@ const E = (extra = {}) => ({ title: "T", authors: ["A B"], authorCount: 1, added
     assert.ok(d.text("index.damaged.json") && d.text("index.json.bak"));
   });
 
+  await test("a copy named index.json.conflict2 is merged; the backup and foreign files are not touched", async () => {
+    const d = new FakeDir();
+    d.put("index.json", JSON.stringify({ schemaVersion: 3, papers: { A: E() } }));
+    d.put("index.json.conflict2", JSON.stringify({ schemaVersion: 3, papers: { A: E(), B: E() } }));
+    d.put("index.json.bak", JSON.stringify({ schemaVersion: 3, papers: { Z: E() } }));
+    d.put("index.json.my-own-copy", "x");
+    assert.deepStrictEqual(await g("findConflictCopies")(d), ["index.json.conflict2"]);
+    assert.strictEqual(await g("mergeConflictCopies")(d), 1);
+    assert.deepStrictEqual(Object.keys(await g("readIndex")(d)).sort(), ["A", "B"]);
+    assert.strictEqual(d.text("index.json.conflict2"), null);
+    assert.ok(d.text("index.json.bak") && d.text("index.json.my-own-copy"));
+    assert.deepStrictEqual(await g("findConflictCopies")(d), []);
+  });
+
+  await test("an unreadable conflict copy stays and is listed", async () => {
+    const d = new FakeDir();
+    d.put("index.json", JSON.stringify({ schemaVersion: 3, papers: { A: E() } }));
+    d.put("index.json.conflict1", "not json");
+    assert.strictEqual(await g("mergeConflictCopies")(d), 0);
+    assert.deepStrictEqual(await g("findConflictCopies")(d), ["index.json.conflict1"]);
+  });
+
+  await test("a missing index.json with earlier copies is not replaced by an empty one", async () => {
+    for (const copy of ["index.json.bak", "index.json.conflict2"]) {
+      const d = new FakeDir();
+      d.put(copy, JSON.stringify({ schemaVersion: 3, papers: { A: E() } }));
+      await assert.rejects(g("updateIndex")(d, (p) => { p.x = E(); }), (e) => e.name === "IndexError" && e.kind === "missing");
+      await assert.rejects(g("readIndex")(d), (e) => e.kind === "missing");
+      assert.strictEqual(d.text("index.json"), null, "nothing was written");
+    }
+    const bak = new FakeDir();
+    bak.put("index.json.bak", JSON.stringify({ schemaVersion: 3, papers: { A: E() } }));
+    assert.strictEqual(await g("restoreIndexBackup")(bak), 1);
+    assert.deepStrictEqual(Object.keys(await g("readIndex")(bak)), ["A"]);
+    const fresh = new FakeDir(); // a folder that never had an index starts one
+    await g("updateIndex")(fresh, (p) => { p.x = E(); });
+    assert.ok(fresh.text("index.json"));
+  });
+
   await test("merge: newer side removing all tags is respected", async () => {
     const me = g("mergeEntries");
     const m = me(E({ tags: ["a"], modified: "2026-01-01" }), E({ modified: "2026-02-01" }));
@@ -507,5 +546,16 @@ const E = (extra = {}) => ({ title: "T", authors: ["A B"], authorCount: 1, added
     assert.ok((await g("readIndex")(d))["ads:1970A&A.....5...84Z"]);
   });
 
+  await test("announcement count from a feed's text (no DOM): new and cross-lists, each paper once; the date of the feed", async () => {
+    const item = (id, type) => "<item><title>t</title><link>https://arxiv.org/abs/" + id + "</link><description>arXiv:" + id + "v2 Announce Type: " + type + "</description><arxiv:announce_type>" + type + "</arxiv:announce_type></item>";
+    const feed = (date, items) => "<?xml version='1.0'?><rss><channel><title>hep-th updates</title><pubDate>" + date + "</pubDate>" + items.join("") + "</channel></rss>";
+    const count = g("countArxivAnnouncement");
+    const one = count(feed("Thu, 15 Oct 2026 00:00:00 -0400", [item("2610.18951", "new"), item("2610.18952", "cross"), item("2610.18952", "cross"), item("2610.18953", "replace"), item("hep-th/9901001", "new"), item("2610.18954", "replace-cross")]));
+    assert.deepStrictEqual([one.date, one.count], ["2026-10-15", 3], JSON.stringify(one));
+    const none = count(feed("Mon, 5 Oct 2026 00:00:00 -0400", []));
+    assert.deepStrictEqual([none.date, none.count], ["2026-10-05", 0]);
+    assert.deepStrictEqual(count("<html>maintenance</html>"), { date: "", count: 0 });
+    assert.strictEqual(count(feed("garbage", [item("2610.1", "new")])).date, "");
+  });
   console.log(results.join("\n"));
 })();

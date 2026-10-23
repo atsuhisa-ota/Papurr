@@ -280,6 +280,31 @@ newCatEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter") addCategory();
 });
 
+// ---- Today's arXiv: the notification (the checking itself is in background.js) ----
+// The permission to show notifications is asked only here, when the user switches this on.
+const notifyEl = document.getElementById("today-notify");
+const notifyStatus = document.getElementById("notify-status");
+
+async function showNotifyState() {
+  const { todayNotify } = await chrome.storage.local.get("todayNotify");
+  notifyEl.checked = !!todayNotify && (await chrome.permissions.contains({ permissions: ["notifications"] }));
+}
+notifyEl.addEventListener("change", async () => {
+  notifyStatus.textContent = "";
+  if (!notifyEl.checked) {
+    await chrome.storage.local.set({ todayNotify: false });
+    return;
+  }
+  if (!(await chrome.permissions.request({ permissions: ["notifications"] }))) {
+    notifyEl.checked = false;
+    notifyStatus.textContent = tr("today.notify.denied");
+    return;
+  }
+  await chrome.storage.local.set({ todayNotify: true });
+  // (Chrome itself may still be barred from showing notifications in the system settings)
+  if ((await chrome.notifications.getPermissionLevel()) === "denied") notifyStatus.textContent = tr("today.notify.blocked");
+});
+
 // ---- Language ----
 const languageEl = document.getElementById("language");
 chrome.storage.local.get("language").then(({ language }) => (languageEl.value = language || "auto"));
@@ -297,6 +322,7 @@ i18nReady.then(() => {
   loadOpenSettings();
   renderSites();
   renderCategories();
+  showNotifyState();
   initAiSettings();
 });
 
